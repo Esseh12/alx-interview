@@ -1,23 +1,24 @@
 #!/usr/bin/node
-const rp = require('request-promise');
-const process = require('process');
+const request = require('request');
 
+const endpoint = 'https://swapi-api.hbtn.io/api';
 const filmId = process.argv[2];
-const url = `https://swapi-api.alx-tools.com/api/films/${filmId}/`;
 
-async function fetchFilmAndCharacters() {
-    try {
-        const filmData = await rp({ uri: url, json: true });
-        const characters = filmData.characters;
+request(`${endpoint}/films/${filmId}/`, async function (error, response, body) {
+  if (error) return console.log(error);
 
-        // Use async/await to fetch each character's data
-        for (let characterUrl of characters) {
-            const characterData = await rp({ uri: characterUrl, json: true });
-            console.log(`${characterData.name}`);
+  const characters = JSON.parse(body).characters;
+
+  for (const character of characters) {
+    await new Promise((resolve, reject) => {
+      request(character, (error, response, body) => {
+        if (error) {
+          reject(error);
+        } else {
+          console.log(JSON.parse(body).name);
+          resolve(body);
         }
-    } catch (error) {
-        console.error('Error:', error.message);
-    }
-}
-
-fetchFilmAndCharacters();
+      });
+    });
+  }
+});
